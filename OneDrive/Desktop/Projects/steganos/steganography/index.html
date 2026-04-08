@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Steganos — Image Steganography</title>
+  <link rel="stylesheet" href="src/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="noise"></div>
+
+  <header>
+    <div class="logo">
+      <span class="logo-mark">◈</span>
+      <span class="logo-text">Steganos</span>
+    </div>
+    <nav class="tabs">
+      <button class="tab active" data-tab="encode" aria-selected="true">Hide Message</button>
+      <button class="tab" data-tab="decode" aria-selected="false">Reveal Message</button>
+    </nav>
+    <a href="https://github.com" class="gh-link" aria-label="View on GitHub">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0 0 22 12c0-5.523-4.477-10-10-10z"/>
+      </svg>
+    </a>
+  </header>
+
+  <main>
+    <!-- ENCODE PANEL -->
+    <section id="encode" class="panel active" aria-label="Hide a message in an image">
+      <div class="panel-grid">
+        <div class="col-left">
+          <div class="step-label">Step 1 — Carrier image</div>
+          <div class="drop-zone" id="enc-drop" role="button" tabindex="0" aria-label="Click or drop an image to load it">
+            <div class="drop-inner">
+              <div class="drop-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+              </div>
+              <p class="drop-primary">Drop image here</p>
+              <p class="drop-secondary">PNG, BMP, TIFF — lossless formats only</p>
+              <button class="btn-outline" id="enc-browse">Browse files</button>
+            </div>
+            <div class="drop-loaded" id="enc-loaded" hidden>
+              <img id="enc-img" alt="Carrier image preview">
+              <div class="img-info">
+                <p id="enc-filename" class="filename"></p>
+                <p id="enc-dimensions" class="dimensions"></p>
+                <div class="capacity-row">
+                  <span class="cap-label">Capacity</span>
+                  <div class="cap-bar"><div class="cap-fill" id="enc-cap-fill"></div></div>
+                  <span id="enc-cap-text" class="cap-text"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <input type="file" id="enc-file" accept="image/*" hidden>
+        </div>
+
+        <div class="col-right">
+          <div class="step-label">Step 2 — Secret message</div>
+          <div class="textarea-wrap">
+            <textarea id="enc-msg" placeholder="Type your secret message here…" spellcheck="false" aria-label="Secret message to hide"></textarea>
+            <div class="textarea-footer">
+              <span id="enc-char-count">0 chars</span>
+              <span id="enc-capacity-warn" class="warn" hidden>Exceeds image capacity</span>
+            </div>
+          </div>
+
+          <div class="step-label" style="margin-top: 1.5rem;">Step 3 — Encode</div>
+          <button class="btn-primary" id="enc-btn">
+            <span>Embed &amp; Download</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </button>
+
+          <div id="enc-status" class="status-msg" hidden></div>
+        </div>
+      </div>
+      <canvas id="enc-canvas" hidden></canvas>
+    </section>
+
+    <!-- DECODE PANEL -->
+    <section id="decode" class="panel" aria-label="Reveal a hidden message from an image" hidden>
+      <div class="panel-grid">
+        <div class="col-left">
+          <div class="step-label">Step 1 — Load image</div>
+          <div class="drop-zone" id="dec-drop" role="button" tabindex="0" aria-label="Click or drop a steganographic image">
+            <div class="drop-inner">
+              <div class="drop-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </div>
+              <p class="drop-primary">Drop steganographic image</p>
+              <p class="drop-secondary">Must be the exact file output by this tool</p>
+              <button class="btn-outline" id="dec-browse">Browse files</button>
+            </div>
+            <div class="drop-loaded" id="dec-loaded" hidden>
+              <img id="dec-img" alt="Steganographic image preview">
+              <div class="img-info">
+                <p id="dec-filename" class="filename"></p>
+                <p id="dec-dimensions" class="dimensions"></p>
+              </div>
+            </div>
+          </div>
+          <input type="file" id="dec-file" accept="image/*" hidden>
+        </div>
+
+        <div class="col-right">
+          <div class="step-label">Step 2 — Decode</div>
+          <button class="btn-primary" id="dec-btn">
+            <span>Reveal Message</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+
+          <div id="dec-status" class="status-msg" hidden></div>
+
+          <div id="dec-result" hidden>
+            <div class="step-label" style="margin-top: 1.5rem;">Decoded message</div>
+            <div class="decoded-output" id="dec-text"></div>
+            <button class="btn-outline" id="dec-copy" style="margin-top: 0.75rem;">Copy to clipboard</button>
+          </div>
+        </div>
+      </div>
+      <canvas id="dec-canvas" hidden></canvas>
+    </section>
+  </main>
+
+  <footer>
+    <p>LSB steganography — modifications are invisible to the human eye. Always use lossless PNG when sharing.</p>
+  </footer>
+
+  <script src="src/steg.js"></script>
+  <script src="src/ui.js"></script>
+</body>
+</html>
